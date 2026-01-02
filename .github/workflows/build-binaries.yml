@@ -26,7 +26,6 @@ jobs:
       - name: Build Linux binary
         run: |
           pyinstaller --onefile --name skippy-linux \
-            --add-data "src:src" \
             --hidden-import=spotipy \
             --hidden-import=spotipy.oauth2 \
             --hidden-import=sqlalchemy \
@@ -76,7 +75,6 @@ jobs:
   create-release:
     needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - name: Download Linux binary
         uses: actions/download-artifact@v4
@@ -93,8 +91,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Build ${{ github.run_number }}
+          tag_name: build-${{ github.sha }}
+          name: Build from ${{ github.sha }}
           body: |
             Automated build from commit ${{ github.sha }}
             
