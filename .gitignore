@@ -5,3 +5,8 @@ __pycache__/
 venv/
 .cache
 *.img
+
+# PyInstaller
+build/
+dist/
+*.spec
