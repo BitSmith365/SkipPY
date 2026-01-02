@@ -1,0 +1,32 @@
+[Unit]
+Description=Spotify Playback Monitor
+After=network-online.target local-fs.target
+Wants=network-online.target
+# Wait for USB devices to be settled
+After=systemd-udev-settle.service
+Requires=local-fs.target
+
+[Service]
+Type=simple
+# Replace YOUR_USERNAME with your actual Linux username
+User=YOUR_USERNAME
+Group=YOUR_USERNAME
+# Path to the launcher script in system location
+ExecStart=/usr/local/bin/spotipy-monitor-launcher
+# PID file to track the running instance
+PIDFile=/run/spotipy/monitor.pid
+# Restart on failure, but only if USB is still mounted
+Restart=on-failure
+RestartSec=30
+# Prevent multiple instances
+RemainAfterExit=no
+# NOTE: The launcher script will change to the correct working directory
+# Do not set WorkingDirectory here as it may vary by system
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=spotipy-monitor
+
+[Install]
+WantedBy=multi-user.target
