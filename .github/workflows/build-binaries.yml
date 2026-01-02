@@ -88,11 +88,15 @@ jobs:
           name: skippy-windows
           path: ./artifacts
 
+      - name: Get short SHA
+        id: slug
+        run: echo "sha_short=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: build-${{ github.sha }}
-          name: Build from ${{ github.sha }}
+          tag_name: build-${{ steps.slug.outputs.sha_short }}
+          name: Build ${{ steps.slug.outputs.sha_short }}
           body: |
             Automated build from commit ${{ github.sha }}
             
