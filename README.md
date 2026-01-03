@@ -1,6 +1,6 @@
 # Spotipy Server
 
-A lightweight Python service that watches your current Spotify playback, records each song to PostgreSQL, and automatically skips songs that you have already heard within the last week (while allowing the second repeat to play).
+A lightweight Python service that watches your current Spotify playback, records each song to PostgreSQL, and automatically skips songs that you have already heard within the last week (while allowing manual consecutive repeats to play).
 
 ## Features
 - Authenticates with Spotify via [Spotipy](https://spotipy.readthedocs.io/) using the official OAuth flow.
