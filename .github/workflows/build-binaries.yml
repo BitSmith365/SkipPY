@@ -1,0 +1,125 @@
+name: Build Binaries
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write  # Required for creating releases
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Only read access needed for checkout
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Linux binary
+        run: |
+          pyinstaller --onefile --name skippy-linux \
+            --hidden-import=spotipy \
+            --hidden-import=spotipy.oauth2 \
+            --hidden-import=sqlalchemy \
+            --hidden-import=psycopg \
+            --hidden-import=dotenv \
+            src/spotify_monitor.py
+
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: skippy-linux
+          path: dist/skippy-linux
+
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: read  # Only read access needed for checkout
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Windows binary
+        run: |
+          pyinstaller --onefile --name skippy-windows.exe `
+            --hidden-import=spotipy `
+            --hidden-import=spotipy.oauth2 `
+            --hidden-import=sqlalchemy `
+            --hidden-import=psycopg `
+            --hidden-import=dotenv `
+            src/spotify_monitor.py
+
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: skippy-windows
+          path: dist/skippy-windows.exe
+
+  create-release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for creating releases
+    steps:
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: skippy-linux
+          path: ./artifacts
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: skippy-windows
+          path: ./artifacts
+
+      - name: Get short SHA
+        id: slug
+        run: echo "sha_short=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: build-${{ steps.slug.outputs.sha_short }}
+          name: Build ${{ steps.slug.outputs.sha_short }}
+          body: |
+            Automated build from commit ${{ github.sha }}
+            
+            ## Downloads
+            - **skippy-linux**: Linux x86_64 binary
+            - **skippy-windows.exe**: Windows x86_64 binary
+            
+            ## Usage
+            1. Download the appropriate binary for your platform
+            2. Make it executable (Linux: `chmod +x skippy-linux`)
+            3. Create a `.env` file with your configuration
+            4. Run the binary
+          files: |
+            ./artifacts/skippy-linux
+            ./artifacts/skippy-windows.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
